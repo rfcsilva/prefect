@@ -350,11 +350,15 @@ class DaskExecutor(Executor):
             raise ValueError("This executor has not been started.")
 
         kwargs.update(self._prep_dask_kwargs(extra_context))
+        task = kwargs.get('task')
+        workers = task.executor_parameters.get('workers', None)
+        print(f"Workers: {workers}")
+
         if self._should_run_var is None:
-            fut = self.client.submit(fn, *args, **kwargs)
+            fut = self.client.submit(fn, *args, **kwargs, workers=workers)
         else:
             fut = self.client.submit(
-                _maybe_run, self._should_run_var.name, fn, *args, **kwargs
+                _maybe_run, self._should_run_var.name, fn, *args, **kwargs, workers=workers
             )
             self._futures.add(fut)
         return fut
