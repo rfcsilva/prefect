@@ -155,3 +155,9 @@ checkpointing = false
     [engine.task_runner]
     # the default task runner, specified using a full path
     default_class = "prefect.engine.task_runner.TaskRunner"
+
+[dask]
+    worker_port = 8001
+
+[rs-repositoty]
+    api = 'http://localhost:8080'

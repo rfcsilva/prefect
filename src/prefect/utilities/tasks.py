@@ -82,7 +82,7 @@ def apply_map(func: Callable, *args: Any, flow: "Flow" = None, **kwargs: Any) ->
     # Check if args/kwargs are valid first
     for x in itertools.chain(args, kwargs.values()):
         if not isinstance(
-            x, (prefect.Task, prefect.utilities.edges.EdgeAnnotation, Sequence)
+                x, (prefect.Task, prefect.utilities.edges.EdgeAnnotation, Sequence)
         ):
             raise TypeError(
                 f"Cannot map over non-sequence object of type `{type(x).__name__}`"
@@ -329,7 +329,7 @@ def pause_task(message: str = None, duration: timedelta = None) -> None:
 
 @curry
 def task(
-    fn: Callable, **task_init_kwargs: Any
+        fn: Callable, **task_init_kwargs: Any
 ) -> "prefect.tasks.core.function.FunctionTask":
     """
     A decorator for creating Tasks from functions.
@@ -428,3 +428,7 @@ def defaults_from_attrs(*attr_args: str) -> Callable:
         return method
 
     return wrapper
+
+
+def select_worker(args):
+    pass
