@@ -25,6 +25,7 @@ from prefect.engine.state import (
     State,
     Success,
 )
+
 from prefect.utilities import executors
 from prefect.utilities.collections import flatten_seq
 
@@ -79,10 +80,10 @@ class FlowRunner(Runner):
     """
 
     def __init__(
-        self,
-        flow: Flow,
-        task_runner_cls: type = None,
-        state_handlers: Iterable[Callable] = None,
+            self,
+            flow: Flow,
+            task_runner_cls: type = None,
+            state_handlers: Iterable[Callable] = None,
     ):
         self.flow = flow
         if task_runner_cls is None:
@@ -118,12 +119,12 @@ class FlowRunner(Runner):
         return new_state
 
     def initialize_run(  # type: ignore
-        self,
-        state: Optional[State],
-        task_states: Dict[Task, State],
-        context: Dict[str, Any],
-        task_contexts: Dict[Task, Dict[str, Any]],
-        parameters: Dict[str, Any],
+            self,
+            state: Optional[State],
+            task_states: Dict[Task, State],
+            context: Dict[str, Any],
+            task_contexts: Dict[Task, Dict[str, Any]],
+            parameters: Dict[str, Any],
     ) -> FlowRunnerInitializeResult:
         """
         Initializes the Task run by initializing state and context appropriately.
@@ -183,15 +184,15 @@ class FlowRunner(Runner):
         )
 
     def run(
-        self,
-        state: State = None,
-        task_states: Dict[Task, State] = None,
-        return_tasks: Iterable[Task] = None,
-        parameters: Dict[str, Any] = None,
-        task_runner_state_handlers: Iterable[Callable] = None,
-        executor: "prefect.engine.executors.Executor" = None,
-        context: Dict[str, Any] = None,
-        task_contexts: Dict[Task, Dict[str, Any]] = None,
+            self,
+            state: State = None,
+            task_states: Dict[Task, State] = None,
+            return_tasks: Iterable[Task] = None,
+            parameters: Dict[str, Any] = None,
+            task_runner_state_handlers: Iterable[Callable] = None,
+            executor: "prefect.engine.executors.Executor" = None,
+            context: Dict[str, Any] = None,
+            task_contexts: Dict[Task, Dict[str, Any]] = None,
     ) -> State:
         """
         The main endpoint for FlowRunners.  Calling this method will perform all
@@ -356,13 +357,13 @@ class FlowRunner(Runner):
     @executors.run_with_heartbeat
     @call_state_handlers
     def get_flow_run_state(
-        self,
-        state: State,
-        task_states: Dict[Task, State],
-        task_contexts: Dict[Task, Dict[str, Any]],
-        return_tasks: Set[Task],
-        task_runner_state_handlers: Iterable[Callable],
-        executor: "prefect.engine.executors.base.Executor",
+            self,
+            state: State,
+            task_states: Dict[Task, State],
+            task_contexts: Dict[Task, Dict[str, Any]],
+            return_tasks: Set[Task],
+            task_runner_state_handlers: Iterable[Callable],
+            executor: "prefect.engine.executors.base.Executor",
     ) -> State:
         """
         Runs the flow.
@@ -401,11 +402,27 @@ class FlowRunner(Runner):
         if set(return_tasks).difference(self.flow.tasks):
             raise ValueError("Some tasks in return_tasks were not found in the flow.")
 
-        def extra_context(task: Task, task_index: int = None) -> dict:
+        def extra_context(task: Task, states: dict = None, task_index: int = None) -> dict:
+
+            workers = []
+            if states:
+                # TODO Improve
+                upstream_task = None
+                for k, v in states.items():
+                    if k.mapped:
+                        upstream_task = k.upstream_task
+                        break
+
+                if isinstance(upstream_task, prefect.tasks.core.constants.Constant):
+                    value = upstream_task.value
+                    if isinstance(value, prefect.utilities.collections.RoutableCollection):
+                        workers = value.route_fn(value[task_index])
+
             return {
                 "task_name": task.name,
                 "task_tags": task.tags,
                 "task_index": task_index,
+                "workers": workers
             }
 
         # -- process each task in order
@@ -418,7 +435,7 @@ class FlowRunner(Runner):
                 # if a task is a constant task, we already know its return value
                 # no need to use up resources by running it through a task runner
                 if task_state is None and isinstance(
-                    task, prefect.tasks.core.constants.Constant
+                        task, prefect.tasks.core.constants.Constant
                 ):
                     task_states[task] = task_state = Success(result=task.value)
 
@@ -427,10 +444,10 @@ class FlowRunner(Runner):
                 # steps to either ensure the cache is still valid / or to recreate the mapped
                 # pipeline for possible retries
                 if (
-                    isinstance(task_state, State)
-                    and task_state.is_finished()
-                    and not task_state.is_cached()
-                    and not task_state.is_mapped()
+                        isinstance(task_state, State)
+                        and task_state.is_finished()
+                        and not task_state.is_cached()
+                        and not task_state.is_mapped()
                 ):
                     continue
 
@@ -531,8 +548,8 @@ class FlowRunner(Runner):
                         # there might be mapped children in a retrying state; this check
                         # looks into the current task state's map_states for such info
                         if (
-                            isinstance(task_state, Mapped)
-                            and len(task_state.map_states) >= idx + 1
+                                isinstance(task_state, Mapped)
+                                and len(task_state.map_states) >= idx + 1
                         ):
                             current_state = task_state.map_states[
                                 idx
@@ -558,7 +575,7 @@ class FlowRunner(Runner):
                                 task_runner_cls=self.task_runner_cls,
                                 task_runner_state_handlers=task_runner_state_handlers,
                                 upstream_mapped_states=upstream_mapped_states,
-                                extra_context=extra_context(task, task_index=idx),
+                                extra_context=extra_context(task, states, task_index=idx),
                             )
                         )
                     if isinstance(task_states.get(task), Mapped):
@@ -626,11 +643,11 @@ class FlowRunner(Runner):
         return state
 
     def determine_final_state(
-        self,
-        state: State,
-        key_states: Set[State],
-        return_states: Dict[Task, State],
-        terminal_states: Set[State],
+            self,
+            state: State,
+            key_states: Set[State],
+            return_states: Dict[Task, State],
+            terminal_states: Set[State],
     ) -> State:
         """
         Implements the logic for determining the final state of the flow run.
@@ -671,15 +688,15 @@ class FlowRunner(Runner):
 
 
 def run_task(
-    task: Task,
-    state: State,
-    upstream_states: Dict[Edge, State],
-    context: Dict[str, Any],
-    flow_result: Result,
-    task_runner_cls: Callable,
-    task_runner_state_handlers: Iterable[Callable],
-    upstream_mapped_states: Dict[Edge, list],
-    is_mapped_parent: bool = False,
+        task: Task,
+        state: State,
+        upstream_states: Dict[Edge, State],
+        context: Dict[str, Any],
+        flow_result: Result,
+        task_runner_cls: Callable,
+        task_runner_state_handlers: Iterable[Callable],
+        upstream_mapped_states: Dict[Edge, list],
+        is_mapped_parent: bool = False,
 ) -> State:
     """
     Runs a specific task. This method is intended to be called by submitting it to

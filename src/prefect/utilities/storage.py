@@ -1,3 +1,4 @@
+import socket
 from typing import TYPE_CHECKING
 
 import prefect
@@ -83,5 +84,10 @@ def extract_flow_from_file(
 
     raise ValueError("No flow found in file.")
 
+
 def file_location(name: str):
     pass
+
+
+def my_ip() -> str:
+    return socket.gethostbyname(socket.gethostname())

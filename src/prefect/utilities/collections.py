@@ -1,6 +1,6 @@
 import collections
-from collections.abc import MutableMapping
-from typing import Any, Generator, Iterable, Iterator, Union, cast
+from collections.abc import MutableMapping, MutableSequence
+from typing import Any, Generator, Iterable, Iterator, Union, cast, Callable
 
 from box import Box
 
@@ -26,7 +26,7 @@ def flatten_seq(seq: Iterable) -> Generator:
     """
     for item in seq:
         if isinstance(item, collections.abc.Iterable) and not isinstance(
-            item, (str, bytes)
+                item, (str, bytes)
         ):
             yield from flatten_seq(item)
         else:
@@ -134,7 +134,7 @@ def merge_dicts(d1: DictLike, d2: DictLike) -> DictLike:
 
     for k, v in d2.items():
         if isinstance(new_dict.get(k), MutableMapping) and isinstance(
-            v, MutableMapping
+                v, MutableMapping
         ):
             new_dict[k] = merge_dicts(new_dict[k], d2[k])
         else:
@@ -143,7 +143,7 @@ def merge_dicts(d1: DictLike, d2: DictLike) -> DictLike:
 
 
 def as_nested_dict(
-    obj: Union[DictLike, Iterable[DictLike]], dct_class: type = DotDict
+        obj: Union[DictLike, Iterable[DictLike]], dct_class: type = DotDict
 ) -> Union[DictLike, Iterable[DictLike]]:
     """
     Given a obj formatted as a dictionary, transforms it (and any nested dictionaries)
@@ -232,3 +232,59 @@ def flatdict_to_dict(dct: dict, dct_class: type = None) -> MutableMapping:
             result[k] = v
 
     return result
+
+
+def indexing_decorator(func):
+    def decorated(self, index, *args):
+        if index < 0:
+            raise IndexError('Indices start from 0')
+
+        return func(self, index, *args)
+
+    return decorated
+
+
+class RoutableCollection(MutableSequence):
+    def __init__(self, l: Iterable = None, route_fn: Callable = None):
+        self._inner_list = l or list()
+        self.route_fn = route_fn
+        self._to_route = True
+        super().__init__()
+
+    def routable(self) -> bool:
+        return self._to_route
+
+    def get_route_fn(self):
+        return self.route_fn
+
+    def __len__(self):
+        return len(self._inner_list)
+
+    @indexing_decorator
+    def __delitem__(self, index):
+        self._inner_list.__delitem__(index)
+
+    @indexing_decorator
+    def insert(self, index, value):
+        self._inner_list.insert(index, value)
+
+    @indexing_decorator
+    def __setitem__(self, index, value):
+        self._inner_list.__setitem__(index, value)
+
+    @indexing_decorator
+    def __getitem__(self, index):
+        return self._inner_list.__getitem__(index)
+
+    def append(self, value):
+        self.insert(len(self) + 1, value)
+
+    def extend(self, iterable: Iterable) -> None:
+        super(RoutableCollection, self).extend(iterable)
+
+    def clear(self) -> None:
+        self._inner_list.clear()
+        super(RoutableCollection, self).clear()
+
+    def __str__(self):
+        return self._inner_list.__str__()

@@ -20,6 +20,9 @@ __all__ = [
     "defaults_from_attrs",
 ]
 
+from prefect.utilities.rs_repository.extrations import band_path
+from prefect.utilities.rs_repository.search import product_info
+
 if TYPE_CHECKING:
     import prefect.tasks.core.constants
     import prefect.tasks.core.collections
@@ -428,7 +431,3 @@ def defaults_from_attrs(*attr_args: str) -> Callable:
         return method
 
     return wrapper
-
-
-def select_worker(args):
-    pass

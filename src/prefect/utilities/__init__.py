@@ -14,5 +14,3 @@ import prefect.utilities.tasks
 import prefect.utilities.agent
 import prefect.utilities.storage
 import prefect.utilities.rs_repository
-
-my_ip = socket.gethostbyname(socket.gethostname())

@@ -10,3 +10,4 @@ import prefect.tasks.github
 import prefect.tasks.notifications
 import prefect.tasks.secrets
 import prefect.tasks.shell
+import prefect.tasks.HelloWorld

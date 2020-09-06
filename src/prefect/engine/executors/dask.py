@@ -351,7 +351,7 @@ class DaskExecutor(Executor):
 
         kwargs.update(self._prep_dask_kwargs(extra_context))
         task = kwargs.get('task')
-        workers = task.executor_parameters.get('workers', None)
+        workers = task.executor_parameters.get('workers') or extra_context.get('workers') or []
         print(f"Workers: {workers}")
 
         if self._should_run_var is None:
