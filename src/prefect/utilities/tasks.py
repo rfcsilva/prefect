@@ -20,8 +20,6 @@ __all__ = [
     "defaults_from_attrs",
 ]
 
-from prefect.utilities.rs_repository.extrations import band_path
-from prefect.utilities.rs_repository.search import product_info
 
 if TYPE_CHECKING:
     import prefect.tasks.core.constants

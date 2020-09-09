@@ -406,17 +406,26 @@ class FlowRunner(Runner):
 
             workers = []
             if states:
-                # TODO Improve
-                upstream_task = None
-                for k, v in states.items():
-                    if k.mapped:
-                        upstream_task = k.upstream_task
-                        break
+                fn_kwargs = {}
 
-                if isinstance(upstream_task, prefect.tasks.core.constants.Constant):
-                    value = upstream_task.value
-                    if isinstance(value, prefect.utilities.collections.RoutableCollection):
-                        workers = value.route_fn(value[task_index])
+                # Getting the unmapped argument that may be used on the routing fun
+                unmapped_args = filter(lambda eg: not eg.mapped, upstream_states.keys())
+                for ua in unmapped_args:
+                    fn_kwargs[ua.key] = ua.upstream_task.value
+
+                mapped_args = list(filter(lambda eg: eg.mapped, upstream_states.keys()))
+                if len(mapped_args) > 1:
+                    raise Exception
+
+                for ma in mapped_args:
+                    upstream_task = ma.upstream_task
+
+                    # Getting the Right Mapped Argument
+                    if isinstance(upstream_task, prefect.tasks.core.constants.Constant):
+                        value = upstream_task.value
+                        if isinstance(value, prefect.utilities.collections.RoutableCollection):
+                            fn_kwargs[ma.key] = value[task_index]
+                            workers = value.route_fn(**fn_kwargs)
 
             return {
                 "task_name": task.name,
