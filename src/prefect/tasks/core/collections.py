@@ -7,8 +7,9 @@ applied when users create dependencies between a task and a collection of other 
 """
 from typing import Any, Iterable
 
+from prefect.core.task import Task
+
 import prefect
-from prefect import Task
 
 
 class VarArgsTask(Task):

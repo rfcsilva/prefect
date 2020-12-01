@@ -615,7 +615,7 @@ class FlowRunner(Runner):
             reference_tasks = self.flow.reference_tasks()
 
             # wait until all terminal tasks are finished
-            final_tasks = terminal_tasks.union(reference_tasks).union(return_tasks)
+            final_tasks = terminal_tasks.union(reference_tasks)
             final_states = executor.wait(
                 {
                     t: task_states.get(t, Pending("Task not evaluated by FlowRunner."))

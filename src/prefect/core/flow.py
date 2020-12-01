@@ -1207,6 +1207,12 @@ class Flow:
                 )
             )
 
+        d = prefect.tasks.dummy.dummy.DummyTask()
+        d.set_dependencies(self, self.terminal_tasks())
+
+        print(f"Ref Tasks: {self.reference_tasks()}")
+        print(f"Terminal Tasks: {self.terminal_tasks()}")
+
         # set global caches that persist across runs
         prefect.context.setdefault("caches", {})
 
