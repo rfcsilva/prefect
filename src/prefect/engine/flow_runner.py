@@ -640,7 +640,7 @@ class FlowRunner(Runner):
         terminal_states = set(
             flatten_seq([all_final_states[t] for t in terminal_tasks])
         )
-        return_states = {t: final_states[t] for t in return_tasks}
+        return_states = {t: final_states[t] for t in final_states}
 
         state = self.determine_final_state(
             state=state,
