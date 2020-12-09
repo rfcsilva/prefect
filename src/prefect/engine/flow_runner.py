@@ -402,30 +402,40 @@ class FlowRunner(Runner):
         if set(return_tasks).difference(self.flow.tasks):
             raise ValueError("Some tasks in return_tasks were not found in the flow.")
 
-        def extra_context(task: Task, states: dict = None, task_index: int = None) -> dict:
+        def extra_context(task: Task, task_index: int = None) -> dict:
 
             workers = []
-            if states:
-                fn_kwargs = {}
+            fn_kwargs = {}
 
-                # Getting the unmapped argument that may be used on the routing fun
-                unmapped_args = filter(lambda eg: not eg.mapped, upstream_states.keys())
-                for ua in unmapped_args:
-                    fn_kwargs[ua.key] = ua.upstream_task.value
+            if task.route_fn:
 
-                mapped_args = list(filter(lambda eg: eg.mapped, upstream_states.keys()))
-                if len(mapped_args) > 1:
-                    raise Exception
+                # If we are mapping over a collection we need to extract the unmapped params and the current mapped
+                # param and pass it to the route function
+                if task.is_mapped():
 
-                for ma in mapped_args:
-                    upstream_task = ma.upstream_task
+                    # Getting the unmapped argument that may be used on the routing fun
+                    unmapped_args = filter(lambda eg: not eg.mapped, upstream_states.keys())
+                    for ua in unmapped_args:
+                        fn_kwargs[ua.key] = ua.upstream_task.value
 
-                    # Getting the Right Mapped Argument
-                    if isinstance(upstream_task, prefect.tasks.core.constants.Constant):
-                        value = upstream_task.value
-                        if isinstance(value, prefect.utilities.collections.RoutableCollection):
-                            fn_kwargs[ma.key] = value[task_index]
-                            workers = value.route_fn(**fn_kwargs)
+                    # Get the current param of the collection
+                    mapped_args = list(filter(lambda eg: eg.mapped, upstream_states.keys()))
+                    if len(mapped_args) > 1:
+                        raise Exception("You can only map over a collection at a time")
+
+                    for ma in mapped_args:
+                        upstream_task = ma.upstream_task
+
+                        # Getting the Right Mapped Argument
+                        if isinstance(upstream_task, prefect.tasks.core.constants.Constant):
+                            value = upstream_task.value
+                            if isinstance(value, prefect.utilities.collections.RoutableCollection):
+                                fn_kwargs[ma.key] = value[task_index]
+                                workers = task.route_fn(**fn_kwargs)
+                else:
+                    # Get the fn params and pass it to the route fn
+                    for ua in upstream_states.keys():
+                        fn_kwargs[ua.key] = ua.upstream_task.value
 
             return {
                 "task_name": task.name,

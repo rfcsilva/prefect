@@ -202,7 +202,9 @@ class Task(metaclass=SignatureValidator):
         log_stdout: bool = False,
         result: "Result" = None,
         target: str = None,
-        executor_parameters: Dict = None
+        executor_parameters: Dict = None,
+        map: bool = False,
+        route_fn=None
     ):
         self.name = name or type(self).__name__
         self.slug = slug
@@ -305,6 +307,8 @@ class Task(metaclass=SignatureValidator):
 
         self.log_stdout = log_stdout
         self.executor_parameters = executor_parameters or {}
+        self._map = map
+        self.route_fn = route_fn
 
         # if new task creations are being tracked, add this task
         # this makes it possible to give guidance to users that forget
@@ -319,6 +323,9 @@ class Task(metaclass=SignatureValidator):
     # reimplement __hash__ because we override __eq__
     def __hash__(self) -> int:
         return id(self)
+
+    def is_mapped(self):
+        return self._map
 
     # Run  --------------------------------------------------------------------
 
