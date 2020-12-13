@@ -402,7 +402,7 @@ class FlowRunner(Runner):
         if set(return_tasks).difference(self.flow.tasks):
             raise ValueError("Some tasks in return_tasks were not found in the flow.")
 
-        def extra_context(task: Task, task_index: int = None) -> dict:
+        def extra_context(task: Task, task_index: int = 0) -> dict:
 
             workers = []
             fn_kwargs = {}
@@ -595,7 +595,7 @@ class FlowRunner(Runner):
                                 task_runner_cls=self.task_runner_cls,
                                 task_runner_state_handlers=task_runner_state_handlers,
                                 upstream_mapped_states=upstream_mapped_states,
-                                extra_context=extra_context(task, states, task_index=idx),
+                                extra_context=extra_context(task, task_index=idx),
                             )
                         )
                     if isinstance(task_states.get(task), Mapped):
