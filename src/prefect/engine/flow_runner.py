@@ -431,11 +431,12 @@ class FlowRunner(Runner):
                             value = upstream_task.value
                             if isinstance(value, prefect.utilities.collections.RoutableCollection):
                                 fn_kwargs[ma.key] = value[task_index]
-                                workers = task.route_fn(**fn_kwargs)
                 else:
                     # Get the fn params and pass it to the route fn
                     for ua in upstream_states.keys():
                         fn_kwargs[ua.key] = ua.upstream_task.value
+
+                workers = task.route_fn(**fn_kwargs)
 
             return {
                 "task_name": task.name,
